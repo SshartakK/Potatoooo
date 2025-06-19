@@ -1,0 +1,41 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app
+      - ./documents:/app/documents
+    depends_on:
+      - db
+      - rabbitmq
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: elenacuprova
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  celery:
+    build: .
+    command: celery -A main.celery worker --loglevel=info
+    volumes:
+      - ./app:/app
+      - ./documents:/app/documents
+    depends_on:
+      - app
+      - rabbitmq
+
+volumes:
+  postgres_data:
